@@ -13,6 +13,14 @@ const { storeMessage, handleMessageRevocation } = require("./antidelete");
 const AntiLinkKick = require("./antilinkick.js");
 const { antibugHandler } = require("./antibug.js"); 
 
+// Print Git commands for deployment reference
+console.log("\n=============================================");
+console.log("🚀 DEPLOYMENT COMMAND REMINDER:");
+console.log("git add index.js");
+console.log('git commit -m "remove readline completely for cloud deploy"');
+console.log("git push origin main");
+console.log("=============================================\n");
+
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
   const { version } = await fetchLatestBaileysVersion();
@@ -220,7 +228,6 @@ async function startBot() {
 
   // ✅ Headless Cloud Pairing Code System
   if (!state.creds?.registered) {
-    // Looks for PHONE_NUMBER inside Railway Environment Variables
     const phoneNumber = process.env.PHONE_NUMBER;
 
     if (!phoneNumber) {
@@ -250,4 +257,4 @@ async function startBot() {
 }
 
 startBot();
-        
+                    
