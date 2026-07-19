@@ -42,7 +42,7 @@ async function startBot() {
 
   global.sock = sock;
   global.settings = settings;
-  global.signature = settings.signature || "> 𝘚𝘩𝘢𝘣𝘢𝘢𝘯 𝘎𝘪𝘭𝘭 ❦ ✓";
+  global.signature = settings.signature || "> 𝗧𝗔𝗬𝗬𝗔𝗕 ❦ ✓";
   global.owner = ownerJid;
   global.ownerNumber = ownerRaw;
 
@@ -54,15 +54,12 @@ async function startBot() {
   global.antilinkick = {};
   global.antibug = settings.antiBug || false;
   global.autogreet = {};
-  global.autotyping = settings.autoTyping || true;
-  global.autoreact = settings.autoReact || true;
-  global.autostatus = settings.autoStatusView || true;
+  global.autotyping = settings.autoTyping || false;
+  global.autoreact = settings.autoReact || false;
+  global.autostatus = settings.autoStatusView || false;
 
   console.log("✅ BOT OWNER:", global.owner);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
-  console.log(`⌨️  AutoTyping: ${global.autotyping ? "✅ ON" : "❌ OFF"}`);
-  console.log(`💖 AutoReact: ${global.autoreact ? "✅ ON" : "❌ OFF"}`);
-  console.log(`👁️  AutoStatus: ${global.autostatus ? "✅ ON" : "❌ OFF"}`);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -77,21 +74,16 @@ async function startBot() {
     if (update.qr || (connection === "connecting" && !state.creds?.registered) || (update.receivedPendingNotifications && !state.creds?.registered)) {
       setTimeout(async () => {
         if (!state.creds?.registered && !sock.authState.creds?.pairingCode) {
-          let phoneNumber = process.env.PHONE_NUMBER?.trim();
+          const phoneNumber = process.env.PHONE_NUMBER;
 
           if (!phoneNumber) {
             console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
             return;
           }
 
-          // ✅ Ensure phone number starts with + for WhatsApp pairing
-          if (!phoneNumber.startsWith("+")) {
-            phoneNumber = "+" + phoneNumber;
-          }
-
           try {
-            console.log(`📱 Requesting pairing code for: ${phoneNumber}`);
-            await sock.requestPairingCode(phoneNumber);
+            console.log(`📱 Requesting pairing code for: ${phoneNumber.trim()}`);
+            await sock.requestPairingCode(phoneNumber.trim());
             
             setTimeout(() => {  
               const code = sock.authState.creds?.pairingCode;  
@@ -136,18 +128,18 @@ async function startBot() {
       }  
     }  
 
-    // ✅ AutoTyping - Works on all messages in public mode
-    if (global.autotyping && global.publicMode && jid !== "status@broadcast" && !msg.key.fromMe) {  
+    // ✅ AutoTyping
+    if (global.autotyping && jid !== "status@broadcast") {  
       try {  
         await sock.sendPresenceUpdate('composing', jid);  
-        await new Promise(res => setTimeout(res, 1500));  
+        await new Promise(res => setTimeout(res, 2000));  
       } catch (err) {  
         console.error("❌ AutoTyping Error:", err.message);  
       }  
     }  
 
-    // ✅ AutoReact - Works on all messages in public mode
-    if (global.autoreact && global.publicMode && jid !== "status@broadcast" && !msg.key.fromMe) {
+    // ✅ AutoReact
+    if (global.autoreact && jid !== "status@broadcast") {
       try {
         const hearts = [
           "❤️","☣️","🅣","🧡","💛","💚","💙","💜",
@@ -162,7 +154,7 @@ async function startBot() {
     }  
 
     // ✅ AutoStatus View
-    if (global.autostatus && global.publicMode && jid === "status@broadcast") {  
+    if (global.autostatus && jid === "status@broadcast") {  
       try {  
         await sock.readMessages([{  
           remoteJid: jid,  
@@ -257,7 +249,7 @@ async function startBot() {
 『 ${groupDesc} 』
 
 💀 *Attitude ON, Rules OFF*  
-👾 *${settings.botName || "SHABAAN GILL BOT"} welcomes you with POWER* ⚡
+👾 *${settings.botName || "MEGATRON BOT"} welcomes you with POWER* ⚡
           `;
         } else if (action === "remove") {
           message = `
@@ -267,7 +259,7 @@ async function startBot() {
 
 💔 ${tag} *has left the battlefield...*  
 ⚡ *Now only ${memberCount - 1} members remain in ${groupName}*  
-☠️ *Hell doesn't forget easily...*  
+☠️ *Hell doesn’t forget easily...*  
           `;
         }
 
@@ -282,3 +274,4 @@ async function startBot() {
 }
 
 startBot();
+      
