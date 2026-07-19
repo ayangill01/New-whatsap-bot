@@ -2,7 +2,7 @@
 // 🚀 REFERENCE DEPLOYMENT COMMANDS:
 // 
 // git add index.js
-// git commit -m "enable public usage for chats and groups"
+// git commit -m "sync configuration states from settings.js"
 // git push origin main
 // =============================================
 
@@ -25,7 +25,7 @@ const { antibugHandler } = require("./antibug.js");
 console.log("\n=============================================");
 console.log("🚀 DEPLOYMENT COMMAND REMINDER:");
 console.log("git add index.js");
-console.log('git commit -m "enable public usage for chats and groups"');
+console.log('git commit -m "sync configuration states from settings.js"');
 console.log("git push origin main");
 console.log("=============================================\n");
 
@@ -35,9 +35,10 @@ async function startBot() {
 
   const sock = makeWASocket({ version, auth: state, logger: P({ level: "fatal" }) });
 
+  // ⚙️ Load operational states dynamically from settings.js
   const settings = typeof loadSettings === 'function' ? loadSettings() : {};
-  let ownerRaw = settings.ownerNumber?.[0] || "92300xxxxxxx";
-  const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw + "@s.whatsapp.net";
+  let ownerRaw = settings.ownerNumber?.[0] || "923143007893";
+  const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw.replace(/\D/g, '') + "@s.whatsapp.net";
 
   global.sock = sock;
   global.settings = settings;
@@ -45,21 +46,20 @@ async function startBot() {
   global.owner = ownerJid;
   global.ownerNumber = ownerRaw;
 
-  // ✅ Global Public Mode Configuration
-  // Setting this ensures your command handlers recognize public behavior
-  global.publicMode = true; 
+  // ✅ Read public/private status from settings config dynamically
+  global.publicMode = settings.public !== undefined ? settings.public : true; 
 
-  // ✅ Flags
+  // ✅ Active Feature Flags mapped explicitly from your configuration file
   global.antilink = {};
   global.antilinkick = {};
-  global.antibug = false;
+  global.antibug = settings.antiBug || false;
   global.autogreet = {};
-  global.autotyping = false;
-  global.autoreact = false;
-  global.autostatus = false;
+  global.autotyping = settings.autoTyping || false;
+  global.autoreact = settings.autoReact || false;
+  global.autostatus = settings.autoStatusView || false;
 
   console.log("✅ BOT OWNER:", global.owner);
-  console.log("🔓 BOT STATUS: Public Mode Enabled (Active in all chats)");
+  console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -171,7 +171,7 @@ async function startBot() {
     // ✅ Antilink
     if (
       jid.endsWith("@g.us") &&
-      global.antilink[jid] === true &&
+      (global.antilink[jid] === true || settings.antiLink === true) &&
       /(chat\.whatsapp\.com|t\.me|discord\.gg|wa\.me|bit\.ly|youtu\.be|https?:\/\/)/i.test(text) &&
       !msg.key.fromMe
     ) {
@@ -212,7 +212,7 @@ async function startBot() {
       }
     }
 
-    // ✅ Public Command handler execution
+    // ✅ Public Command handler execution mapping global configurations
     try {  
       await handleCommand(sock, msg, { publicMode: global.publicMode });  
     } catch (err) {  
@@ -220,10 +220,10 @@ async function startBot() {
     }
   });
 
-  // ✅ AutoGreet
+  // ✅ AutoGreet (Welcome/Farewell Update Logic)
   sock.ev.on("group-participants.update", async (update) => {
     const { id, participants, action } = update;
-    if (!global.autogreet?.[id]) return;
+    if (settings.greetings !== true) return;
 
     try {
       const metadata = await sock.groupMetadata(id);
@@ -249,7 +249,7 @@ async function startBot() {
 『 ${groupDesc} 』
 
 💀 *Attitude ON, Rules OFF*  
-👾 *TAYYAB HELL-MD welcomes you with POWER* ⚡
+👾 *${settings.botName || "MEGATRON BOT"} welcomes you with POWER* ⚡
           `;
         } else if (action === "remove") {
           message = `
@@ -274,4 +274,4 @@ async function startBot() {
 }
 
 startBot();
-                       
+                  
