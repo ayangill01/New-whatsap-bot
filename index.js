@@ -54,12 +54,15 @@ async function startBot() {
   global.antilinkick = {};
   global.antibug = settings.antiBug || false;
   global.autogreet = {};
-  global.autotyping = settings.autoTyping || false;
-  global.autoreact = settings.autoReact || false;
-  global.autostatus = settings.autoStatusView || false;
+  global.autotyping = settings.autoTyping || true;
+  global.autoreact = settings.autoReact || true;
+  global.autostatus = settings.autoStatusView || true;
 
   console.log("✅ BOT OWNER:", global.owner);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
+  console.log(`⌨️  AutoTyping: ${global.autotyping ? "✅ ON" : "❌ OFF"}`);
+  console.log(`💖 AutoReact: ${global.autoreact ? "✅ ON" : "❌ OFF"}`);
+  console.log(`👁️  AutoStatus: ${global.autostatus ? "✅ ON" : "❌ OFF"}`);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -128,18 +131,18 @@ async function startBot() {
       }  
     }  
 
-    // ✅ AutoTyping
-    if (global.autotyping && jid !== "status@broadcast") {  
+    // ✅ AutoTyping - Works on all messages in public mode
+    if (global.autotyping && global.publicMode && jid !== "status@broadcast" && !msg.key.fromMe) {  
       try {  
         await sock.sendPresenceUpdate('composing', jid);  
-        await new Promise(res => setTimeout(res, 2000));  
+        await new Promise(res => setTimeout(res, 1500));  
       } catch (err) {  
         console.error("❌ AutoTyping Error:", err.message);  
       }  
     }  
 
-    // ✅ AutoReact
-    if (global.autoreact && jid !== "status@broadcast") {
+    // ✅ AutoReact - Works on all messages in public mode
+    if (global.autoreact && global.publicMode && jid !== "status@broadcast" && !msg.key.fromMe) {
       try {
         const hearts = [
           "❤️","☣️","🅣","🧡","💛","💚","💙","💜",
@@ -154,7 +157,7 @@ async function startBot() {
     }  
 
     // ✅ AutoStatus View
-    if (global.autostatus && jid === "status@broadcast") {  
+    if (global.autostatus && global.publicMode && jid === "status@broadcast") {  
       try {  
         await sock.readMessages([{  
           remoteJid: jid,  
@@ -259,7 +262,7 @@ async function startBot() {
 
 💔 ${tag} *has left the battlefield...*  
 ⚡ *Now only ${memberCount - 1} members remain in ${groupName}*  
-☠️ *Hell doesn’t forget easily...*  
+☠️ *Hell doesn't forget easily...*  
           `;
         }
 
