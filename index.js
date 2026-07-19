@@ -33,7 +33,12 @@ async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
   const { version } = await fetchLatestBaileysVersion();
 
-  const sock = makeWASocket({ version, auth: state, logger: P({ level: "fatal" }) });
+  const sock = makeWASocket({ 
+    version, 
+    auth: state, 
+    logger: P({ level: "fatal" }),
+    printQRInTerminal: false // Disabled since we are explicitly using pairing codes
+  });
 
   // ⚙️ Load operational states dynamically from settings.js
   const settings = typeof loadSettings === 'function' ? loadSettings() : {};
@@ -63,42 +68,47 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
+  // ✅ Fixed Pairing Code Lifecycle Handshake
+  let pairingCodeRequested = false;
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
 
     if (connection === "open") {  
-      console.log("✅ [BOT ONLINE] Connected to WhatsApp!");  
+      console.log("✅ [BOT ONLINE] Connected to WhatsApp successfully!");  
     }  
 
-    // ✅ Generate pairing code ONLY when socket interface is fully ready
-    if (update.qr || (connection === "connecting" && !state.creds?.registered) || (update.receivedPendingNotifications && !state.creds?.registered)) {
+    // Trigger pairing code if we are not registered and haven't requested one this lifecycle yet
+    if (!state.creds?.registered && !pairingCodeRequested) {
+      pairingCodeRequested = true;
+      
       setTimeout(async () => {
-        if (!state.creds?.registered && !sock.authState.creds?.pairingCode) {
-          const phoneNumber = process.env.PHONE_NUMBER;
+        let phoneNumber = process.env.PHONE_NUMBER;
 
-          if (!phoneNumber) {
-            console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
-            return;
-          }
+        if (!phoneNumber) {
+          console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
+          pairingCodeRequested = false; // Reset to allow retry on next connection update
+          return;
+        }
 
-          try {
-            console.log(`📱 Requesting pairing code for: ${phoneNumber.trim()}`);
-            await sock.requestPairingCode(phoneNumber.trim());
-            
-            setTimeout(() => {  
-              const code = sock.authState.creds?.pairingCode;  
-              if (code) {  
-                console.log("\n=============================================");
-                console.log("🔗 WHATSAPP PAIRING CODE:");
-                console.log(`👉  ${code}  👈`);
-                console.log("=============================================\n");
-              } else {  
-                console.log("❌ Pairing code generation delayed. Retrying...");
-              }  
-            }, 3000);
-          } catch (err) {
-            console.error("❌ Failed to request pairing code:", err.message);
-          }
+        // Clean phone number: remove +, spaces, dashes, leaving only pure digits
+        phoneNumber = phoneNumber.replace(/\D/g, '');
+
+        try {
+          console.log(`📱 Requesting pairing code for: ${phoneNumber}`);
+          const code = await sock.requestPairingCode(phoneNumber);
+          
+          if (code) {  
+            console.log("\n=============================================");
+            console.log("🔗 WHATSAPP PAIRING CODE:");
+            console.log(`👉  ${code}  👈`);
+            console.log("=============================================\n");
+          } else {  
+            console.log("❌ Pairing code generation returned empty. Check number format.");
+            pairingCodeRequested = false;
+          }  
+        } catch (err) {
+          console.error("❌ Failed to request pairing code:", err.message);
+          pairingCodeRequested = false;
         }
       }, 5000); 
     }
@@ -106,12 +116,18 @@ async function startBot() {
     if (connection === "close") {  
       const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut);  
       console.log("❌ Disconnected. Reconnecting:", shouldReconnect);  
-      if (shouldReconnect) startBot();  
+      if (shouldReconnect) {
+        startBot();  
+      } else {
+        console.log("❌ Logged out of session. Please delete 'auth_info' directory and restart.");
+      }
     }
   });
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0];
+    if (!msg.message) return; // Ignore status updates or empty payload notifications
+    
     const jid = msg.key.remoteJid;
     const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
 
@@ -132,7 +148,6 @@ async function startBot() {
     if (global.autotyping && jid !== "status@broadcast") {  
       try {  
         await sock.sendPresenceUpdate('composing', jid);  
-        await new Promise(res => setTimeout(res, 2000));  
       } catch (err) {  
         console.error("❌ AutoTyping Error:", err.message);  
       }  
@@ -179,7 +194,6 @@ async function startBot() {
         await sock.sendMessage(jid, {  
           delete: { remoteJid: jid, fromMe: false, id: msg.key.id, participant: msg.key.participant || msg.participant }  
         });  
-        
       } catch (err) {
         console.error("❌ Antilink Delete Error:", err.message);
       }
@@ -194,7 +208,6 @@ async function startBot() {
     ) {
       try {
         await AntiLinkKick.checkAntilinkKick({ conn: sock, m: msg });
-        
       } catch (err) {
         console.error("❌ AntilinkKick Error:", err.message || err);
       }
@@ -204,15 +217,13 @@ async function startBot() {
     if (global.antibug === true && !msg.key.fromMe) {
       try {
         const isBug = await antibugHandler({ conn: sock, m: msg }); 
-        if (isBug) {
-          return;
-        }
+        if (isBug) return;
       } catch (err) {
         console.error("❌ AntiBug Error:", err.message || err);
       }
     }
 
-    // ✅ Public Command handler execution mapping global configurations
+    // ✅ Public/Private Mode command execution routing
     try {  
       await handleCommand(sock, msg, { publicMode: global.publicMode });  
     } catch (err) {  
@@ -274,4 +285,4 @@ async function startBot() {
 }
 
 startBot();
-                   
+      
