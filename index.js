@@ -2,7 +2,7 @@
 // 🚀 REFERENCE DEPLOYMENT COMMANDS:
 // 
 // git add index.js
-// git commit -m "move pairing code request inside connection handler"
+// git commit -m "enable public usage for chats and groups"
 // git push origin main
 // =============================================
 
@@ -25,7 +25,7 @@ const { antibugHandler } = require("./antibug.js");
 console.log("\n=============================================");
 console.log("🚀 DEPLOYMENT COMMAND REMINDER:");
 console.log("git add index.js");
-console.log('git commit -m "move pairing code request inside connection handler"');
+console.log('git commit -m "enable public usage for chats and groups"');
 console.log("git push origin main");
 console.log("=============================================\n");
 
@@ -45,6 +45,10 @@ async function startBot() {
   global.owner = ownerJid;
   global.ownerNumber = ownerRaw;
 
+  // ✅ Global Public Mode Configuration
+  // Setting this ensures your command handlers recognize public behavior
+  global.publicMode = true; 
+
   // ✅ Flags
   global.antilink = {};
   global.antilinkick = {};
@@ -55,6 +59,7 @@ async function startBot() {
   global.autostatus = false;
 
   console.log("✅ BOT OWNER:", global.owner);
+  console.log("🔓 BOT STATUS: Public Mode Enabled (Active in all chats)");
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -67,7 +72,6 @@ async function startBot() {
 
     // ✅ Generate pairing code ONLY when socket interface is fully ready
     if (update.qr || (connection === "connecting" && !state.creds?.registered) || (update.receivedPendingNotifications && !state.creds?.registered)) {
-      // Small timeout ensures socket layer stabilizes
       setTimeout(async () => {
         if (!state.creds?.registered && !sock.authState.creds?.pairingCode) {
           const phoneNumber = process.env.PHONE_NUMBER;
@@ -96,7 +100,7 @@ async function startBot() {
             console.error("❌ Failed to request pairing code:", err.message);
           }
         }
-      }, 5000); // 5 second buffer for stable connection setup
+      }, 5000); 
     }
 
     if (connection === "close") {  
@@ -208,9 +212,9 @@ async function startBot() {
       }
     }
 
-    // ✅ Command handler
+    // ✅ Public Command handler execution
     try {  
-      await handleCommand(sock, msg, {});  
+      await handleCommand(sock, msg, { publicMode: global.publicMode });  
     } catch (err) {  
       console.error("❌ Command error:", err.message || err);  
     }
@@ -270,4 +274,4 @@ async function startBot() {
 }
 
 startBot();
-    
+                       
