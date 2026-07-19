@@ -1,3 +1,11 @@
+// =============================================
+// 🚀 REFERENCE DEPLOYMENT COMMANDS:
+// 
+// git add index.js
+// git commit -m "move pairing code request inside connection handler"
+// git push origin main
+// =============================================
+
 const fs = require("fs");
 const P = require("pino");
 const { 
@@ -13,11 +21,11 @@ const { storeMessage, handleMessageRevocation } = require("./antidelete");
 const AntiLinkKick = require("./antilinkick.js");
 const { antibugHandler } = require("./antibug.js"); 
 
-// Print Git commands for deployment reference
+// Print Git commands to the console for easy reference on startup
 console.log("\n=============================================");
 console.log("🚀 DEPLOYMENT COMMAND REMINDER:");
 console.log("git add index.js");
-console.log('git commit -m "remove readline completely for cloud deploy"');
+console.log('git commit -m "move pairing code request inside connection handler"');
 console.log("git push origin main");
 console.log("=============================================\n");
 
@@ -56,6 +64,40 @@ async function startBot() {
     if (connection === "open") {  
       console.log("✅ [BOT ONLINE] Connected to WhatsApp!");  
     }  
+
+    // ✅ Generate pairing code ONLY when socket interface is fully ready
+    if (update.qr || (connection === "connecting" && !state.creds?.registered) || (update.receivedPendingNotifications && !state.creds?.registered)) {
+      // Small timeout ensures socket layer stabilizes
+      setTimeout(async () => {
+        if (!state.creds?.registered && !sock.authState.creds?.pairingCode) {
+          const phoneNumber = process.env.PHONE_NUMBER;
+
+          if (!phoneNumber) {
+            console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
+            return;
+          }
+
+          try {
+            console.log(`📱 Requesting pairing code for: ${phoneNumber.trim()}`);
+            await sock.requestPairingCode(phoneNumber.trim());
+            
+            setTimeout(() => {  
+              const code = sock.authState.creds?.pairingCode;  
+              if (code) {  
+                console.log("\n=============================================");
+                console.log("🔗 WHATSAPP PAIRING CODE:");
+                console.log(`👉  ${code}  👈`);
+                console.log("=============================================\n");
+              } else {  
+                console.log("❌ Pairing code generation delayed. Retrying...");
+              }  
+            }, 3000);
+          } catch (err) {
+            console.error("❌ Failed to request pairing code:", err.message);
+          }
+        }
+      }, 5000); // 5 second buffer for stable connection setup
+    }
 
     if (connection === "close") {  
       const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut);  
@@ -225,36 +267,7 @@ async function startBot() {
       console.error("❌ AutoGreet Error:", err.message);
     }
   });
-
-  // ✅ Headless Cloud Pairing Code System
-  if (!state.creds?.registered) {
-    const phoneNumber = process.env.PHONE_NUMBER;
-
-    if (!phoneNumber) {
-      console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
-      return;
-    }
-
-    try {
-      console.log(`📱 Requesting pairing code for: ${phoneNumber.trim()}`);
-      await sock.requestPairingCode(phoneNumber.trim());
-      
-      setTimeout(() => {  
-        const code = sock.authState.creds?.pairingCode;  
-        if (code) {  
-          console.log("\n=============================================");
-          console.log("🔗 WHATSAPP PAIRING CODE:");
-          console.log(`👉  ${code}  👈`);
-          console.log("=============================================\n");
-        } else {  
-          console.log("❌ Pairing code generation delayed. Retrying on next restart.");
-        }  
-      }, 3000);
-    } catch (err) {
-      console.error("❌ Failed to request pairing code:", err.message);
-    }
-  }
 }
 
 startBot();
-                    
+    
