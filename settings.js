@@ -14,7 +14,7 @@ const config = {
   autoTyping: false,        // ⌨️ Fake Typing
   autoReact: false,         // 💖 Auto Emoji Reaction
   autoStatusView: false,    // 👁️ Auto-View Status
-  public: true,             // 🌍 Public or Private Mode
+  public: true,             // 🌍 Public Mode Enabled (Active in all chats)
   antiLink: false,          // 🚫 Delete Links in Groups
   antiBug: false,           // 🛡️ Prevent Malicious Crashes
   greetings: true,          // 🙋 Welcome/Farewell Messages
@@ -33,6 +33,3 @@ function loadSettings() {
 }
 
 module.exports = { loadSettings };
-
-
-This is settings.js fix this to make my bot use publicly
