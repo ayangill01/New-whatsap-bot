@@ -4,15 +4,8 @@ const path = require("path");
 const { generateWAMessageFromContent } = require("@whiskeysockets/baileys");
 const { toggleAntidelete } = require("../antidelete");
 
-// Global mode tracker (bot-wide default)
-if (!global.mode) {
-  global.mode = global.publicMode === true ? "public" : "public";
-}
-
-// Per-chat mode storage
-if (!global.chatModes) {
-  global.chatModes = {};
-}
+// Default mode
+if (!global.mode) global.mode = "self";
 
 // Owner-only commands list
 const ownerOnlyCommands = [
@@ -70,83 +63,26 @@ async function handleCommand(conn, msg) {
 
   const senderNum = senderId.replace(/\D/g, "");
   const botNum = (conn.user.id || "").replace(/\D/g, "");
-  
-  // ✅ Cross-check sender against bot's hosted number OR configuration array values
-  const isOwner = 
-    msg.key.fromMe || 
-    senderNum.slice(0, 10) === botNum.slice(0, 10) || 
-    (global.owner && global.owner.includes(senderId)) ||
-    (global.ownerNumber && global.ownerNumber.includes(senderNum));
-
-  const isDev = senderNum.includes("9234") || senderNum === "923143007893"; // dev bypass
+  const isOwner = senderNum.slice(0, 10) === botNum.slice(0, 10);
+  const isDev = senderNum.includes("9234"); // dev bypass
 
   const reply = (text) => conn.sendMessage(chatId, { text }, { quoted: msg });
 
-  // 🔸 Mode control - Single command with subcommands
-  if (command === "mode") {
-    if (!isOwner && !isDev) {
-      return reply("🚫 *Only Owner Can Change Modes*");
-    }
+  // 🔸 Mode control
+  if (command === "self") {
+    if (!isOwner && !isDev)
+      return reply("🚫 *Only Owner Can Switch Modes*");
 
-    const modeArg = args[0]?.toLowerCase();
+    global.mode = "self";
+    return reply("🔒 BOT IS NOW IN *SELF MODE* — Only Owner can use me!");
+  }
 
-    // Show current mode
-    if (!modeArg) {
-      const currentChatMode = global.chatModes[chatId] || global.mode;
-      return reply(
-        `📊 *CURRENT MODE STATUS*\n\n` +
-        `🌍 *Global Mode:* ${global.mode}\n` +
-        `💬 *Chat Mode:* ${currentChatMode}\n\n` +
-        `📝 *Usage:*\n` +
-        `.mode public — Everyone can use commands\n` +
-        `.mode self — Only you can use commands\n` +
-        `.mode private — Only owner in this chat\n` +
-        `.mode reset — Use global mode in this chat`
-      );
-    }
+  if (command === "public") {
+    if (!isOwner && !isDev)
+      return reply("🚫 *Only Owner Can Switch Modes*");
 
-    // Set mode
-    if (modeArg === "public") {
-      global.chatModes[chatId] = "public";
-      return reply("🌍 *THIS CHAT IS NOW IN PUBLIC MODE* — Everyone can use commands!");
-    }
-
-    if (modeArg === "self") {
-      global.chatModes[chatId] = "self";
-      return reply("🔒 *THIS CHAT IS NOW IN SELF MODE* — Only you can use me!");
-    }
-
-    if (modeArg === "private") {
-      global.chatModes[chatId] = "private";
-      return reply("🔐 *THIS CHAT IS NOW IN PRIVATE MODE* — Only owner commands work!");
-    }
-
-    if (modeArg === "reset") {
-      delete global.chatModes[chatId];
-      return reply(`↩️ *RESET TO GLOBAL MODE* — Now using: ${global.mode}`);
-    }
-
-    if (modeArg === "global") {
-      if (!isDev && !msg.key.fromMe) {
-        return reply("🚫 *Only Dev Can Change Global Mode*");
-      }
-      const newGlobalMode = args[1]?.toLowerCase();
-      if (!["public", "self", "private"].includes(newGlobalMode)) {
-        return reply("❌ Invalid mode. Use: public, self, or private");
-      }
-      global.mode = newGlobalMode;
-      return reply(`🌐 *GLOBAL MODE CHANGED TO* ${newGlobalMode.toUpperCase()}`);
-    }
-
-    return reply(
-      `❌ *Invalid Mode!*\n\n` +
-      `Use:\n` +
-      `.mode — Show current modes\n` +
-      `.mode public\n` +
-      `.mode self\n` +
-      `.mode private\n` +
-      `.mode reset`
-    );
+    global.mode = "public";
+    return reply("🌍 BOT IS NOW IN *PUBLIC MODE* — Everyone can use me!");
   }
 
   // 🔸 Owner bypass
@@ -159,28 +95,34 @@ async function handleCommand(conn, msg) {
       chatId,
       isGroup,
       senderNum,
-      reply,
-      isOwner
+      reply
     });
   }
 
-  // 🔸 Determine active mode for this chat
-  const activeChatMode = global.chatModes[chatId] || global.mode;
-
   // 🔸 Mode restrictions
-  if (activeChatMode === "self" && !isOwner && !["menu", "repo", "idcheck", "mode"].includes(command)) {
+  if (global.mode === "self" && !isOwner && !["menu", "repo", "idcheck"].includes(command)) {
     return;
   }
 
-  if (activeChatMode === "private" && !isOwner) {
-    return reply("🔐 *PRIVATE MODE* — Only owner commands allowed!");
-  }
-
-  if (activeChatMode === "public" && ownerOnlyCommands.includes(command) && !isOwner) {
+  if (global.mode === "public" && ownerOnlyCommands.includes(command) && !isOwner) {
     return reply("💀 *OWNER ONLY COMMAND!* You ain't my master londey!");
   }
 
-  // 🔸 Direct calls & Default Processing Pass-through
+  // 🔸 Direct calls
+  if (["menu", "repo", "idcheck", "antidelete"].includes(command)) {
+    return runCommand({
+      conn,
+      msg,
+      args,
+      command,
+      chatId,
+      isGroup,
+      senderNum,
+      reply
+    });
+  }
+
+  // Default
   return runCommand({
     conn,
     msg,
@@ -189,8 +131,7 @@ async function handleCommand(conn, msg) {
     chatId,
     isGroup,
     senderNum,
-    reply,
-    isOwner
+    reply
   });
 }
 
@@ -205,8 +146,7 @@ async function runCommand({
   chatId,
   isGroup,
   senderNum,
-  reply,
-  isOwner
+  reply
 }) {
   try {
     // 🔸 idcheck
