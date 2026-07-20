@@ -1,5 +1,5 @@
 // 📂 File: autoreact.js
-// 💖 AutoReact System — ── 💎 𝘚𝘩𝘢𝘣𝘢𝘢𝘯 𝘎𝘪𝘭𝘭 💎 ──
+// 💖 AutoReact System — TAYYAB HELL-MD
 
 const fs = require("fs");
 const path = require("path");
@@ -48,31 +48,13 @@ module.exports = async function ({ conn, m, reply, args, jid }) {
       );
     }
 
-    // 🔒 Toggle Global State & Setup Anti-Flood Parameters
-    if (mode === "on") {
-      global.autoreact = true;
-      // Define your expanded reaction emoji pool globally
-      global.autoreactEmojis = [
-        "❤️","☣️","🅣","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💕","💞","💓","💗","💖","💘","💝","🇵🇰","♥️",
-        "🔥","⚡","👑","✨","⭐","🦁","🚀","🎯","💎","🔮","🧿","💥","👹","💀","☠️"
-      ];
-    } else {
-      global.autoreact = false;
-    }
-
-    // Dynamically fallback to the clean stored global owner number if available
-    const activeOwner = (global.ownerNumber || "923143007893").replace(/\D/g, "");
+    global.autoreact = mode === "on";
 
     return reply(
 `╭━━━〔 *💖 AUTO-REACT STATUS* 〕━━━╮
 ┃ ${mode === "on" ? "✅ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *ENABLED*" : "❌ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *DISABLED*"}
 ┃ 👤 𝑻𝒐𝒈𝒈𝒍𝒆𝒅 𝒃𝒚: +${senderNum}
-┃ 📞 𝑶𝒘𝒏𝒆𝒓: +${activeOwner}
-┃ 🛡️ 𝑹𝒂𝒕𝒆-𝑳𝒊𝒎𝒊𝒕: *PROTECTED (15s Filter)*
-┃ 
-┃ ╭━━━━━━━━━━━━━━━━━━━╮
-┃ ┃ 💜 SʜᴀʙᴀAɴ Gɪʟʟ 💜
-┃ ╰━━━━━━━━━━━━━━━━━━━╯
+┃ 💜 𝑷𝒐𝒘𝒆𝒓𝒆𝒅 𝒃𝒚: 𝑻𝒂𝒚𝒚𝒂𝒃 𝑬𝒙𝒑𝒍𝒐𝒊𝒕𝒔
 ╰━━━━━━━━━━━━━━━━━━━╯`
     );
 
