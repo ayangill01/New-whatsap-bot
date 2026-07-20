@@ -63,40 +63,28 @@ async function handleCommand(conn, msg) {
 
   const senderNum = senderId.replace(/\D/g, "");
   const botNum = (conn.user.id || "").replace(/\D/g, "");
-  const isOwner = senderNum.slice(0, 10) === botNum.slice(0, 10);
-  const isDev = senderNum.includes("9234"); // dev bypass
+  
+  // Strict Owner Checks (Matches your absolute number OR if the bot sends a command to itself)
+  const targetOwnerNum = "923143007893"; 
+  const isOwner = senderNum === targetOwnerNum || senderNum.slice(0, 10) === botNum.slice(0, 10);
 
   const reply = (text) => conn.sendMessage(chatId, { text }, { quoted: msg });
 
   // 🔸 Mode control
   if (command === "self") {
-    if (!isOwner && !isDev)
-      return reply("🚫 *Only Owner Can Switch Modes*");
+    if (!isOwner)
+      return reply("🚫 *Only Shabaan Gill can switch modes!*");
 
     global.mode = "self";
-    return reply("🔒 BOT IS NOW IN *SELF MODE* — Only Owner can use me!");
+    return reply("🔒 BOT IS NOW IN *SELF MODE* — Only Shabaan Gill can use me!");
   }
 
   if (command === "public") {
-    if (!isOwner && !isDev)
-      return reply("🚫 *Only Owner Can Switch Modes*");
+    if (!isOwner)
+      return reply("🚫 *Only Shabaan Gill can switch modes!*");
 
     global.mode = "public";
     return reply("🌍 BOT IS NOW IN *PUBLIC MODE* — Everyone can use me!");
-  }
-
-  // 🔸 Owner bypass
-  if (isDev) {
-    return runCommand({
-      conn,
-      msg,
-      args,
-      command,
-      chatId,
-      isGroup,
-      senderNum,
-      reply
-    });
   }
 
   // 🔸 Mode restrictions
@@ -105,24 +93,10 @@ async function handleCommand(conn, msg) {
   }
 
   if (global.mode === "public" && ownerOnlyCommands.includes(command) && !isOwner) {
-    return reply("💀 *OWNER ONLY COMMAND!* You ain't my master londey!");
+    return reply("💀 *OWNER ONLY COMMAND!* You are not Shabaan Gill!");
   }
 
-  // 🔸 Direct calls
-  if (["menu", "repo", "idcheck", "antidelete"].includes(command)) {
-    return runCommand({
-      conn,
-      msg,
-      args,
-      command,
-      chatId,
-      isGroup,
-      senderNum,
-      reply
-    });
-  }
-
-  // Default
+  // Default execution path
   return runCommand({
     conn,
     msg,
@@ -155,7 +129,7 @@ async function runCommand({
       return reply(
         `🤖 *Bot ID:* ${botId}\n📤 *Sender JID:* ${
           msg.key.participant || msg.key.remoteJid
-        }\n🔢 *Sender Clean:* ${senderNum}`
+        }\n🔢 *Sender Clean:* ${senderNum}\n👑 *Configured Master:* 923143007893`
       );
     }
 
