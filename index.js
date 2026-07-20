@@ -29,6 +29,55 @@ console.log('git commit -m "sync configuration states from settings.js"');
 console.log("git push origin main");
 console.log("=============================================\n");
 
+// 🛡️ AutoReact Rate-Limiting System
+class AutoReactRateLimiter {
+  constructor() {
+    this.lastReactTime = {}; // Track last reaction time per chat
+    this.reactDelay = 2000; // 2 second delay between reactions (WhatsApp friendly)
+    this.maxReactsPerMinute = 20; // Max 20 reactions per minute per chat
+    this.reactCount = {}; // Track reaction count per minute
+  }
+
+  canReact(jid) {
+    const now = Date.now();
+    
+    // Initialize tracking for this chat if not exists
+    if (!this.lastReactTime[jid]) {
+      this.lastReactTime[jid] = 0;
+      this.reactCount[jid] = 0;
+    }
+
+    // Check if enough time has passed since last reaction
+    if (now - this.lastReactTime[jid] < this.reactDelay) {
+      return false; // Too soon, rate limited
+    }
+
+    // Reset counter every minute
+    if (!this.reactCount[jid] || now - this.reactCount[jid].timestamp > 60000) {
+      this.reactCount[jid] = { count: 0, timestamp: now };
+    }
+
+    // Check if max reactions per minute reached
+    if (this.reactCount[jid].count >= this.maxReactsPerMinute) {
+      return false; // Too many reactions, rate limited
+    }
+
+    return true;
+  }
+
+  recordReact(jid) {
+    const now = Date.now();
+    this.lastReactTime[jid] = now;
+    
+    if (!this.reactCount[jid]) {
+      this.reactCount[jid] = { count: 0, timestamp: now };
+    }
+    this.reactCount[jid].count++;
+  }
+}
+
+const autoReactLimiter = new AutoReactRateLimiter();
+
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
   const { version } = await fetchLatestBaileysVersion();
@@ -62,6 +111,12 @@ async function startBot() {
   global.autotyping = settings.autoTyping || false;
   global.autoreact = settings.autoReact || false;
   global.autostatus = settings.autoStatusView || false;
+  
+  // ✅ Setup AutoReact emoji pool
+  global.autoreactEmojis = [
+    "❤️","☣️","🅣","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💕","💞","💓","💗","💖","💘","💝","🇵🇰","♥️",
+    "🔥","⚡","👑","✨","⭐","🦁","🚀","🎯","💎","🔮","🧿","💥","👹","💀","☠️"
+  ];
 
   console.log("✅ BOT OWNER:", global.owner);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
@@ -153,16 +208,27 @@ async function startBot() {
       }  
     }  
 
-    // ✅ AutoReact
+    // ✅ AutoReact with Rate-Limiting
     if (global.autoreact && jid !== "status@broadcast") {
       try {
-        const hearts = [
-          "❤️","☣️","🅣","🧡","💛","💚","💙","💜",
-          "🖤","🤍","🤎","💕","💞","💓",
-          "💗","💖","💘","💝","🇵🇰","♥️"
-        ];
-        const randomHeart = hearts[Math.floor(Math.random() * hearts.length)];
-        await sock.sendMessage(jid, { react: { text: randomHeart, key: msg.key } });
+        // 🛡️ Check rate limit before sending reaction
+        if (autoReactLimiter.canReact(jid)) {
+          const emojis = global.autoreactEmojis || [
+            "❤️","☣️","🅣","🧡","💛","💚","💙","💜",
+            "🖤","🤍","🤎","💕","💞","💓",
+            "💗","💖","💘","💝","🇵🇰","♥️"
+          ];
+          const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+          
+          await sock.sendMessage(jid, { 
+            react: { text: randomEmoji, key: msg.key } 
+          });
+          
+          // Record this reaction for rate limiting
+          autoReactLimiter.recordReact(jid);
+        } else {
+          console.log(`⏳ AutoReact rate-limited for ${jid}`);
+        }
       } catch (err) {
         console.error("❌ AutoReact Error:", err.message);
       }
@@ -270,7 +336,7 @@ async function startBot() {
 
 💔 ${tag} *has left the battlefield...*  
 ⚡ *Now only ${memberCount - 1} members remain in ${groupName}*  
-☠️ *Hell doesn’t forget easily...*  
+☠️ *Hell doesn't forget easily...*  
           `;
         }
 
@@ -286,4 +352,3 @@ async function startBot() {
 
 startBot();
 
-                                              
