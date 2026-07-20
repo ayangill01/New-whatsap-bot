@@ -1,4 +1,4 @@
-// Clean & Readable Command Handler
+// Updated to clear module cache before requiring command files so edits show without restart
 const fs = require("fs");
 const path = require("path");
 const { generateWAMessageFromContent } = require("@whiskeysockets/baileys");
@@ -164,9 +164,12 @@ async function runCommand({
       });
     }
 
-    // 🔸 individual command files
+    // 🔸 individual command files (clear cache so edits show)
     const filePath = path.join(__dirname, "..", `${command}.js`);
     if (fs.existsSync(filePath)) {
+      try {
+        delete require.cache[require.resolve(filePath)];
+      } catch (e) {}
       const commandFile = require(filePath);
       if (typeof commandFile === "function") {
         return await commandFile({ conn, m: msg, args, command, jid: chatId, isGroup, sender: senderNum, reply });
@@ -191,4 +194,3 @@ async function runCommand({
 module.exports = {
   handleCommand
 };
-  
