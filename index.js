@@ -12,8 +12,7 @@ const {
   default: makeWASocket, 
   useMultiFileAuthState, 
   fetchLatestBaileysVersion, 
-  DisconnectReason,
-  delay // Imported delay helper from Baileys
+  DisconnectReason 
 } = require("@whiskeysockets/baileys");
 
 const { handleCommand } = require("./menu/case");
@@ -43,17 +42,14 @@ async function startBot() {
 
   // ⚙️ Load operational states dynamically from settings.js
   const settings = typeof loadSettings === 'function' ? loadSettings() : {};
-  
-  // ✅ Explicitly setting your personal target fallback number here
   let ownerRaw = settings.ownerNumber?.[0] || "923143007893";
   const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw.replace(/\D/g, '') + "@s.whatsapp.net";
 
   global.sock = sock;
   global.settings = settings;
-  global.signature = settings.signature || "> 𝗦𝗛𝗔𝗕𝗔𝗔𝗡 𝗚𝗜𝗟𝗟 ❦ ✓";
+  global.signature = settings.signature || "> 𝗧𝗔𝗬𝗬𝗔𝗕 ❦ ✓";
   global.owner = ownerJid;
   global.ownerNumber = ownerRaw;
-  global.ownerName = settings.ownerName || "Shabaan Gill"; // ✅ Assigned clean profile name globally
 
   // ✅ Read public/private status from settings config dynamically
   global.publicMode = settings.public !== undefined ? settings.public : true; 
@@ -67,8 +63,7 @@ async function startBot() {
   global.autoreact = settings.autoReact || false;
   global.autostatus = settings.autoStatusView || false;
 
-  console.log("✅ BOT OWNER JID:", global.owner);
-  console.log("👤 BOT OWNER NAME:", global.ownerName);
+  console.log("✅ BOT OWNER:", global.owner);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
 
   sock.ev.on("creds.update", saveCreds);
@@ -83,19 +78,15 @@ async function startBot() {
     }  
 
     // Trigger pairing code if we are not registered and haven't requested one this lifecycle yet
-    if (!sock.authState.creds.registered && !pairingCodeRequested) {
+    if (!state.creds?.registered && !pairingCodeRequested) {
       pairingCodeRequested = true;
       
-      // Using an immediate async block invocation with a proper await delay instead of standard setTimeout
-      (async () => {
-        // Allow Baileys internal socket structures 6 seconds to settle down completely
-        await delay(6000); 
-
-        let phoneNumber = process.env.PHONE_NUMBER || global.ownerNumber;
+      setTimeout(async () => {
+        let phoneNumber = process.env.PHONE_NUMBER;
 
         if (!phoneNumber) {
-          console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab or global variable configuration.");
-          pairingCodeRequested = false; 
+          console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
+          pairingCodeRequested = false; // Reset to allow retry on next connection update
           return;
         }
 
@@ -107,12 +98,9 @@ async function startBot() {
           const code = await sock.requestPairingCode(phoneNumber);
           
           if (code) {  
-            // Formats the code dynamically into ABCD-EFGH visual segments if it isn't already formatted
-            const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
-
             console.log("\n=============================================");
             console.log("🔗 WHATSAPP PAIRING CODE:");
-            console.log(`👉  \x1b[36m${formattedCode}\x1b[0m  👈`);
+            console.log(`👉  ${code}  👈`);
             console.log("=============================================\n");
           } else {  
             console.log("❌ Pairing code generation returned empty. Check number format.");
@@ -120,10 +108,9 @@ async function startBot() {
           }  
         } catch (err) {
           console.error("❌ Failed to request pairing code:", err.message);
-          // If the process fails due to early socket closures, allow a retry attempt on the next handshake
           pairingCodeRequested = false;
         }
-      })();
+      }, 5000); 
     }
 
     if (connection === "close") {  
@@ -222,7 +209,7 @@ async function startBot() {
       try {
         await AntiLinkKick.checkAntilinkKick({ conn: sock, m: msg });
       } catch (err) {
-        console.error("❌ AntiLinkKick Error:", err.message || err);
+        console.error("❌ AntilinkKick Error:", err.message || err);
       }
     }
 
@@ -273,7 +260,7 @@ async function startBot() {
 『 ${groupDesc} 』
 
 💀 *Attitude ON, Rules OFF*  
-👾 *${settings.botName || "MEGATRON BOT"}* under command of *${global.ownerName}* welcomes you with POWER ⚡
+👾 *${settings.botName || "MEGATRON BOT"} welcomes you with POWER* ⚡
           `;
         } else if (action === "remove") {
           message = `
@@ -298,4 +285,4 @@ async function startBot() {
 }
 
 startBot();
-          
+
