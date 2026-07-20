@@ -12,7 +12,8 @@ const {
   default: makeWASocket, 
   useMultiFileAuthState, 
   fetchLatestBaileysVersion, 
-  DisconnectReason 
+  DisconnectReason,
+  delay // Imported delay helper from Baileys
 } = require("@whiskeysockets/baileys");
 
 const { handleCommand } = require("./menu/case");
@@ -44,7 +45,7 @@ async function startBot() {
   const settings = typeof loadSettings === 'function' ? loadSettings() : {};
   
   // ✅ Explicitly setting your personal target fallback number here
-  let ownerRaw = settings.ownerNumber?.[0] || "923114004690";
+  let ownerRaw = settings.ownerNumber?.[0] || "923143007893";
   const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw.replace(/\D/g, '') + "@s.whatsapp.net";
 
   global.sock = sock;
@@ -82,15 +83,19 @@ async function startBot() {
     }  
 
     // Trigger pairing code if we are not registered and haven't requested one this lifecycle yet
-    if (!state.creds?.registered && !pairingCodeRequested) {
+    if (!sock.authState.creds.registered && !pairingCodeRequested) {
       pairingCodeRequested = true;
       
-      setTimeout(async () => {
+      // Using an immediate async block invocation with a proper await delay instead of standard setTimeout
+      (async () => {
+        // Allow Baileys internal socket structures 6 seconds to settle down completely
+        await delay(6000); 
+
         let phoneNumber = process.env.PHONE_NUMBER || global.ownerNumber;
 
         if (!phoneNumber) {
-          console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
-          pairingCodeRequested = false; // Reset to allow retry on next connection update
+          console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab or global variable configuration.");
+          pairingCodeRequested = false; 
           return;
         }
 
@@ -102,9 +107,12 @@ async function startBot() {
           const code = await sock.requestPairingCode(phoneNumber);
           
           if (code) {  
+            // Formats the code dynamically into ABCD-EFGH visual segments if it isn't already formatted
+            const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
+
             console.log("\n=============================================");
             console.log("🔗 WHATSAPP PAIRING CODE:");
-            console.log(`👉  ${code}  👈`);
+            console.log(`👉  \x1b[36m${formattedCode}\x1b[0m  👈`);
             console.log("=============================================\n");
           } else {  
             console.log("❌ Pairing code generation returned empty. Check number format.");
@@ -112,9 +120,10 @@ async function startBot() {
           }  
         } catch (err) {
           console.error("❌ Failed to request pairing code:", err.message);
+          // If the process fails due to early socket closures, allow a retry attempt on the next handshake
           pairingCodeRequested = false;
         }
-      }, 5000); 
+      })();
     }
 
     if (connection === "close") {  
@@ -289,4 +298,4 @@ async function startBot() {
 }
 
 startBot();
-      
+          
