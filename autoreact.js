@@ -1,5 +1,5 @@
 // 📂 File: autoreact.js
-// 💖 AutoReact System — ━━━ ❖ ＳＨＡＢＡＡＮ  ＧＩＬＬ ❖ ━━━
+// 💖 AutoReact System — TAYYAB HELL-MD
 
 const fs = require("fs");
 const path = require("path");
@@ -50,20 +50,11 @@ module.exports = async function ({ conn, m, reply, args, jid }) {
 
     global.autoreact = mode === "on";
 
-    // Dynamic expanded emoji array available for index.js execution mapping references
-    global.autoreactEmojis = [
-      "❤️","☣️","🅣","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💕","💞","💓","💗","💖","💘","💝","🇵🇰","♥️",
-      "🔥","⚡","👑","✨","⭐","🦁","🚀","🎯","💎","🔮","🧿","🎐","🛸","🪐","💥","🕶️","🦾","👹","💀","☠️"
-    ];
-
     return reply(
 `╭━━━〔 *💖 AUTO-REACT STATUS* 〕━━━╮
 ┃ ${mode === "on" ? "✅ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *ENABLED*" : "❌ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *DISABLED*"}
 ┃ 👤 𝑻𝒐𝒈𝒈𝒍𝒆𝒅 𝒃𝒚: +${senderNum}
-┃ 
-┃ ╭━━━━━━━━━━━━━━━━━━━╮
-┃ ┃ 💜 Sʜᴀʙᴀᴀɴ Gɪʟʟ 💜
-┃ ╰━━━━━━━━━━━━━━━━━━━╯
+┃ 💜 𝑷𝒐𝒘𝒆𝒓𝒆𝒅 𝒃𝒚: 𝑻𝒂𝒚𝒚𝒂𝒃 𝑬𝒙𝒑𝒍𝒐𝒊𝒕𝒔
 ╰━━━━━━━━━━━━━━━━━━━╯`
     );
 
