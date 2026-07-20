@@ -17,9 +17,10 @@ const {
 
 const { handleCommand } = require("./menu/case");
 const { loadSettings } = require("./settings");
-const { storeMessage, handleMessageRevocation } = require("./antidelete");
+const { storeMessage, handleMessageRevocation, setBotId } = require("./antidelete");
 const AntiLinkKick = require("./antilinkick.js");
 const { antibugHandler } = require("./antibug.js"); 
+const autoread = require("./autoread");
 
 // Print Git commands to the console for easy reference on startup
 console.log("\n=============================================");
@@ -62,6 +63,9 @@ async function startBot() {
   const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw.replace(/\D/g, '') + "@s.whatsapp.net";
 
   global.sock = sock;
+  // set bot id in antidelete module so it can ignore bot's own messages
+  try { setBotId(sock); } catch (e) { console.error('setBotId error', e); }
+
   global.settings = settings;
   global.signature = settings.signature || "> 𝗧𝗔𝗬𝗬𝗔𝗕 ❦ ✓";
   global.owner = ownerJid;
@@ -71,13 +75,14 @@ async function startBot() {
   global.publicMode = settings.public !== undefined ? settings.public : true; 
 
   // ✅ Active Feature Flags mapped explicitly from your configuration file
-  global.antilink = {};
-  global.antilinkick = {};
+  global.antilink = global.antilink || {};
+  global.antilinkick = global.antilinkick || {};
   global.antibug = settings.antiBug || false;
-  global.autogreet = {};
+  global.autogreet = global.autogreet || {};
   global.autotyping = settings.autoTyping || false;
   global.autoreact = settings.autoReact || false;
   global.autostatus = settings.autoStatusView || false;
+  global.autorecording = settings.autoRecording || false;
 
   console.log("✅ BOT OWNER:", global.owner);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
@@ -160,6 +165,15 @@ async function startBot() {
       }  
     }  
 
+    // AutoRead: call check hook to mark messages as read if enabled
+    try {
+      if (autoread && typeof autoread.checkAutoRead === 'function') {
+        await autoread.checkAutoRead(sock, msg);
+      }
+    } catch (e) {
+      console.error('AutoRead hook error', e);
+    }
+
     // ✅ AutoTyping with Rate Limiting
     if (global.autotyping && jid !== "status@broadcast" && canPerformAction(jid, "typing")) {  
       try {  
@@ -168,6 +182,15 @@ async function startBot() {
         console.error("❌ AutoTyping Error:", err.message);  
       }  
     }  
+
+    // ✅ AutoRecording (fake recording presence) with Rate Limiting
+    if (global.autorecording && jid !== "status@broadcast" && canPerformAction(jid, "recording")) {
+      try {
+        await sock.sendPresenceUpdate('recording', jid);
+      } catch (err) {
+        console.error('❌ AutoRecording Error:', err.message);
+      }
+    }
 
     // ✅ AutoReact with Rate Limiting
     if (global.autoreact && jid !== "status@broadcast" && canPerformAction(jid, "react")) {
@@ -253,7 +276,8 @@ async function startBot() {
   // ✅ AutoGreet (Welcome/Farewell Update Logic)
   sock.ev.on("group-participants.update", async (update) => {
     const { id, participants, action } = update;
-    if (settings.greetings !== true) return;
+    // Only greet if global setting enabled OR group-specific autogreet was turned on via command
+    if (settings.greetings !== true && !(global.autogreet && global.autogreet[id])) return;
 
     try {
       const metadata = await sock.groupMetadata(id);
@@ -304,5 +328,3 @@ async function startBot() {
 }
 
 startBot();
-
-          
