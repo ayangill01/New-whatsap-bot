@@ -19,7 +19,53 @@ const config = {
   antiBug: false,           // 🛡️ Prevent Malicious Crashes
   greetings: true,          // 🙋 Welcome/Farewell Messages
   readmore: false,          // 📜 Readmore in Long Replies
-  ANTIDELETE: true          // 🗑️ Anti-Delete Messages
+  ANTIDELETE: true,         // 🗑️ Anti-Delete Messages
+
+  // 🎯 BOT MODES (NORMAL, AGGRESSIVE, STEALTH)
+  // ============================================
+  botMode: "NORMAL",        // 🔹 Options: "NORMAL" | "AGGRESSIVE" | "STEALTH"
+
+  // 🎯 MODE CONFIGURATIONS
+  modes: {
+    NORMAL: {
+      name: "NORMAL",
+      autoReactDelay: { min: 1000, max: 3000 },
+      typingDelay: { min: 500, max: 1500 },
+      autoReactChance: 0.7, // 70% chance to react
+      description: "Balanced mode - Regular reactions and typing"
+    },
+    AGGRESSIVE: {
+      name: "AGGRESSIVE",
+      autoReactDelay: { min: 200, max: 800 },
+      typingDelay: { min: 100, max: 500 },
+      autoReactChance: 1.0, // 100% chance to react
+      description: "Fast mode - Immediate reactions, quick typing"
+    },
+    STEALTH: {
+      name: "STEALTH",
+      autoReactDelay: { min: 3000, max: 8000 },
+      typingDelay: { min: 2000, max: 4000 },
+      autoReactChance: 0.4, // 40% chance to react
+      description: "Stealth mode - Delayed reactions, appears inactive"
+    }
+  },
+
+  // 💖 AUTO REACT SETTINGS
+  // =====================
+  autoReactEmojis: [
+    "❤️", "☣️", "🅣", "🧡", "💛", "💚", "💙", "💜",
+    "🖤", "🤍", "🤎", "💕", "💞", "💓",
+    "💗", "💖", "💘", "💝", "🇵🇰", "♥️"
+  ],
+  autoReactInGroups: true,    // 💖 React in group chats
+  autoReactInDMs: true,       // 💖 React in direct messages
+  autoReactExcludeStatus: true, // 💖 Don't react to status updates
+
+  // ⌨️ AUTO TYPING SETTINGS
+  // =======================
+  autoTypingInGroups: true,   // ⌨️ Show typing in groups
+  autoTypingInDMs: true,      // ⌨️ Show typing in DMs
+  autoTypingExcludeStatus: true // ⌨️ Don't type on status updates
 };
 
 // ✅ Register owner(s) globally in WhatsApp JID format
