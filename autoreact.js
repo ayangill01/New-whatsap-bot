@@ -1,5 +1,5 @@
 // 📂 File: autoreact.js
-// 💖 AutoReact System — SHABAAN GILL
+// 💖 AutoReact System — ── 💎 𝘚𝘩𝘢𝘣𝘢𝘢𝘯 𝘎𝘪𝘭𝘭 💎 ──
 
 const fs = require("fs");
 const path = require("path");
@@ -28,22 +28,6 @@ function resolveSenderNumber(m, conn) {
   return getCleanNumber(senderJid || "");
 }
 
-// 🛡️ Rate limiting map to prevent rate-overlimit errors
-const reactCooldown = new Map();
-const COOLDOWN_MS = 3000; // 3 second cooldown between reactions
-
-function isRateLimited(jid) {
-  const now = Date.now();
-  const lastReact = reactCooldown.get(jid) || 0;
-  
-  if (now - lastReact < COOLDOWN_MS) {
-    return true;
-  }
-  
-  reactCooldown.set(jid, now);
-  return false;
-}
-
 module.exports = async function ({ conn, m, reply, args, jid }) {
   try {
     const isGroup = jid.endsWith("@g.us");
@@ -65,15 +49,15 @@ module.exports = async function ({ conn, m, reply, args, jid }) {
     }
 
     global.autoreact = mode === "on";
-    global.reactCooldown = reactCooldown;
-    global.isRateLimited = isRateLimited;
 
     return reply(
 `╭━━━〔 *💖 AUTO-REACT STATUS* 〕━━━╮
 ┃ ${mode === "on" ? "✅ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *ENABLED*" : "❌ 𝑨𝒖𝒕𝒐-𝑹𝒆𝒂𝒄𝒕: *DISABLED*"}
 ┃ 👤 𝑻𝒐𝒈𝒈𝒍𝒆𝒅 𝒃𝒚: +${senderNum}
-┃ ⏱️ 𝑹𝒂𝒕𝒆 𝑳𝒊𝒎𝒊𝒕: 3 seconds
-┃ 💜 𝑷𝒐𝒘𝒆𝒓𝒆𝒅 𝒃𝒚: ✧•🔥• ＳＨＡＢＡＡＮ ＧＩＬＬ •🔥•✧
+┃ 
+┃ ╭━━━━━━━━━━━━━━━━━━━╮
+┃ ┃ 💜 Sʜᴀʙᴀᴀɴ Gɪʟʟ 💜
+┃ ╰━━━━━━━━━━━━━━━━━━━╯
 ╰━━━━━━━━━━━━━━━━━━━╯`
     );
 
