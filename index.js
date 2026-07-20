@@ -42,14 +42,17 @@ async function startBot() {
 
   // ⚙️ Load operational states dynamically from settings.js
   const settings = typeof loadSettings === 'function' ? loadSettings() : {};
-  let ownerRaw = settings.ownerNumber?.[0] || "923143007893";
+  
+  // ✅ Explicitly setting your personal target fallback number here
+  let ownerRaw = settings.ownerNumber?.[0] || "923114004690";
   const ownerJid = ownerRaw.includes("@s.whatsapp.net") ? ownerRaw : ownerRaw.replace(/\D/g, '') + "@s.whatsapp.net";
 
   global.sock = sock;
   global.settings = settings;
-  global.signature = settings.signature || "> 𝗧𝗔𝗬𝗬𝗔𝗕 ❦ ✓";
+  global.signature = settings.signature || "> 𝗦𝗛𝗔𝗕𝗔𝗔𝗡 𝗚𝗜𝗟𝗟 ❦ ✓";
   global.owner = ownerJid;
   global.ownerNumber = ownerRaw;
+  global.ownerName = settings.ownerName || "Shabaan Gill"; // ✅ Assigned clean profile name globally
 
   // ✅ Read public/private status from settings config dynamically
   global.publicMode = settings.public !== undefined ? settings.public : true; 
@@ -63,7 +66,8 @@ async function startBot() {
   global.autoreact = settings.autoReact || false;
   global.autostatus = settings.autoStatusView || false;
 
-  console.log("✅ BOT OWNER:", global.owner);
+  console.log("✅ BOT OWNER JID:", global.owner);
+  console.log("👤 BOT OWNER NAME:", global.ownerName);
   console.log(`🔓 BOT STATUS: ${global.publicMode ? "Public Mode Enabled (Active in all chats)" : "Private Mode Enabled (Owner only)"}`);
 
   sock.ev.on("creds.update", saveCreds);
@@ -82,7 +86,7 @@ async function startBot() {
       pairingCodeRequested = true;
       
       setTimeout(async () => {
-        let phoneNumber = process.env.PHONE_NUMBER;
+        let phoneNumber = process.env.PHONE_NUMBER || global.ownerNumber;
 
         if (!phoneNumber) {
           console.log("❌ ERROR: You must add 'PHONE_NUMBER' to your Railway Variables tab.");
@@ -209,7 +213,7 @@ async function startBot() {
       try {
         await AntiLinkKick.checkAntilinkKick({ conn: sock, m: msg });
       } catch (err) {
-        console.error("❌ AntilinkKick Error:", err.message || err);
+        console.error("❌ AntiLinkKick Error:", err.message || err);
       }
     }
 
@@ -260,7 +264,7 @@ async function startBot() {
 『 ${groupDesc} 』
 
 💀 *Attitude ON, Rules OFF*  
-👾 *${settings.botName || "MEGATRON BOT"} welcomes you with POWER* ⚡
+👾 *${settings.botName || "MEGATRON BOT"}* under command of *${global.ownerName}* welcomes you with POWER ⚡
           `;
         } else if (action === "remove") {
           message = `
