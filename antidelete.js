@@ -1,5 +1,5 @@
 // 📂 File: antidelete.js
-// 🛡️ Ultra Pro Max Anti-Delete System — TAYYAB HELL-MD
+// 🛡️ Ultra Pro Max Anti-Delete System — SHABAAN GILL-MD
 
 const fs = require("fs");
 const path = require("path");
@@ -72,11 +72,11 @@ async function toggleAntidelete({ conn, m, args, reply, jid }) {
     return reply(
 `〔 ✨ *ＡＮＴＩ－ＤＥＬＥＴＥ* ✨ 〕
 ┃ 🛡️ Usage:
-┃    🌸 *.antidelete on*   → 𝘌𝘯𝘢𝘣𝘭𝘦
-┃    🌸 *.antidelete off*  → 𝘋𝘪𝘴𝘢𝘣𝘭𝘦
+┃    🌸 *.antidelete on*   → 𝘌𝘯𝘢𝘣𝘭ε
+┃    🌸 *.antidelete off*  → 𝘋𝘪𝘴𝘢𝘣𝘭ε
 ┃ 
-┃ 💡 𝘛𝘩𝘪𝘴 𝘸𝘪𝘭𝘭 𝘴𝘢𝘷𝘦 & 𝘳𝘦𝘤𝘰𝘷𝘦𝘳
-┃    𝘢𝘯𝘺 𝘥𝘦𝘭𝘦𝘵𝘦𝘥 𝘮𝘦𝘴𝘴𝘢𝘨𝘦𝘴 💬
+┃ 💡 𝘛𝘩𝘪𝘴 𝘸𝘪𝘭𝘭 𝘴𝘢𝘷𝘦 & 𝘳ε𝘤𝘰𝘷ε𝘳
+┃    𝘢𝘯𝘺 𝘥ε𝘭ε𝘵ε𝘥 𝘮ε𝘴𝘴𝘢𝘨ε𝘴 💬
 ╰━━━━━━━━━━━━━━━━━━╯`
     );
   }
@@ -87,10 +87,10 @@ async function toggleAntidelete({ conn, m, args, reply, jid }) {
 
   return reply(
 `〔 💖 *ＡＮＴＩ－ＤＥＬＥＴＥ ＳＴＡＴＵＳ* 💖 〕
-┃ 🔰 𝘗𝘳𝘰𝘵𝘦𝘤𝘵𝘪𝘰𝘯: *${enabled ? "ＥＮＡＢＬＥＤ ✅" : "ＤＩＳＡＢＬＥＤ ❌"}*
-┃ 📌 𝘈𝘱𝘱𝘭𝘪𝘦𝘴 𝘵𝘰: *𝘛𝘩𝘪𝘴 𝘊𝘩𝘢𝘵*
+┃ 🔰 𝘗𝘳𝘰𝘵ε𝘤𝘵𝘪𝘰𝘯: *${enabled ? "ＥＮＡＢＬＥＤ ✅" : "ＤＩＳＡＢＬＥＤ ❌"}*
+┃ 📌 𝘈𝘱𝘱𝘭𝘪ε𝘴 𝘵𝘰: *𝘛𝘩𝘪𝘴 𝘊𝘩𝘢𝘵*
 ┃ 
-┃ 👑 𝑺𝒆𝒄𝒖𝒓𝒆𝒅 𝒃𝒚: ✨ 𝑻𝒂𝒚𝒚𝒂𝒃 𝑴𝑫 ✨
+┃ 👑 𝑺𝒆𝒄𝒖𝒓𝒆𝒅 𝒃𝒚: ✨ 𝑺𝒉𝒂𝒃𝒂𝒂𝒏 𝑮𝒊𝒍𝒍 ✨
 ╰━━━━━━━━━━━━━━━━━━╯`
   );
 }
@@ -120,10 +120,10 @@ async function handleMessageRevocation(sock, msg) {
 
   const infoText = 
 `〔 ⚠️ *ＡＮＴＩ－ＤＥＬＥＴＥ ＤＥＴＥＣＴＥＤ* ⚠️ 〕
-┃ 👤 𝘚𝘦𝘯𝘥𝘦𝘳: *${senderName}*
-┃ 🗑️ 𝘋𝘦𝘭𝘦𝘵𝘦𝘥 𝘮𝘴𝘨 𝘳𝘦𝘤𝘰𝘷𝘦𝘳𝘦𝘥 ✨
+┃ 👤 𝘚ε𝘯𝘥ε𝘳: *${senderName}*
+┃ 🗑️ 𝘋ε𝘭ε𝘵ε𝘥 𝘮𝘴𝘨 𝘳ε𝘤𝘰𝘷ε𝘳ε𝘥 ✨
 ┃ 
-┃ 💌 𝑺𝒆𝒄𝒖𝒓𝒆𝒅 𝒃𝒚 𝑻𝒂𝒚𝒚𝒂𝒃 𝑴𝑫
+┃ 💌 𝑺𝒆𝒄𝒖𝒓𝒆𝒅 𝒃𝒚 𝑺𝒉𝒂𝒃𝒂𝒂𝒏 𝑮𝒊𝒍𝒍
 ╰━━━━━━━━━━━━━━━━━━╯`;
 
   if (messageContent.text) {
@@ -176,3 +176,4 @@ module.exports = {
   toggleAntidelete,
   setBotId
 };
+    
